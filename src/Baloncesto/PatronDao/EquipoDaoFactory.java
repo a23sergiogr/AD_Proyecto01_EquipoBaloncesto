@@ -7,9 +7,10 @@ import java.io.IOException;
 
 public class EquipoDaoFactory {
     private static EquipoDaoFactory instancia;
-    private Dao<Equipo,String> dao;
+    private Dao<Equipo, String> dao;
 
-    private EquipoDaoFactory() {}
+    private EquipoDaoFactory() {
+    }
 
     //Sigelton
     public static synchronized EquipoDaoFactory getInstance() {
@@ -19,19 +20,18 @@ public class EquipoDaoFactory {
         return instancia;
     }
 
-    public Dao<Equipo,String> getEquipoDAO(String tipo) {
-        try{
-            if (dao == null) {
-                switch (tipo) {
-                    case "FBS":
-                        dao = new EquipoFileBufferedStream();
-                        break;
-                    case "OS":
-                        dao = new EquipoObjectStreamDao();
-                        break;
-                    default:
-                        throw new IllegalArgumentException("Tipo de DAO no soportado");
-                }
+    public Dao<Equipo, String> getEquipoDAO(String tipo) {
+        try {
+            switch (tipo) {
+                case "FBS":
+                    dao = new EquipoFileBufferedStream();
+                    break;
+                case "OS":
+                    dao = new EquipoObjectStreamDao();
+                    break;
+                default:
+                    throw new IllegalArgumentException("Tipo de DAO no soportado");
+
             }
         } catch (IOException e) {
             System.err.println("No se pudo crear el Archivo");
@@ -40,19 +40,17 @@ public class EquipoDaoFactory {
         return dao;
     }
 
-    public Dao<Equipo,String> getEquipoDAO(String tipo, String ruta) {
-        try{
-            if (dao == null) {
-                switch (tipo) {
-                    case "FBS":
-                        dao = new EquipoFileBufferedStream(ruta);
-                        break;
-                    case "OS":
-                        dao = new EquipoObjectStreamDao(ruta);
-                        break;
-                    default:
-                        throw new IllegalArgumentException("Tipo de DAO no soportado");
-                }
+    public Dao<Equipo, String> getEquipoDAO(String tipo, String ruta) {
+        try {
+            switch (tipo) {
+                case "FBS":
+                    dao = new EquipoFileBufferedStream(ruta);
+                    break;
+                case "OS":
+                    dao = new EquipoObjectStreamDao(ruta);
+                    break;
+                default:
+                    throw new IllegalArgumentException("Tipo de DAO no soportado");
             }
         } catch (IOException e) {
             System.err.println("No se pudo crear el Archivo");

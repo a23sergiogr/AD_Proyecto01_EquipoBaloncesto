@@ -53,9 +53,10 @@ public class ClasificacionFileDao implements Dao<Clasificacion, String>{
         Dao<Equipo, String> equipoDao = equipoDAOFactory.getEquipoDAO("OS", RUTA);
         //clasificacion.getEquipos().forEach(equipoDao::save);
         TreeSet<Equipo> set = clasificacion.getEquipos();
+        boolean equipo = false;
         for (Equipo e : set)
-            equipoDao.save(e);
-        return true;
+            equipo = equipoDao.save(e);
+        return equipo;
     }
 
     @Override
