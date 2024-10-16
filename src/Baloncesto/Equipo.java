@@ -74,14 +74,11 @@ public class Equipo implements Serializable, Comparable<Equipo> {
      */
     @Override
     public int compareTo(Equipo eq) {
-        if (this.getdifPtn() > eq.getdifPtn())
-            return -2;
-        else if (this.getdifPtn().equals(eq.getdifPtn())) {
-            if (this.ptnFavor >= eq.ptnFavor)
-                return -1;
-            return 0;
+        int difPtnComparison = Integer.compare(eq.getdifPtn(), this.getdifPtn());
+        if (difPtnComparison != 0) {
+            return difPtnComparison;
         }
-        return 1;
+        return Integer.compare(eq.getPtnFavor(), this.getPtnFavor());
     }
 
     /**

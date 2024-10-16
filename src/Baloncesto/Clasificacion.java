@@ -3,7 +3,7 @@ package Baloncesto;
 import java.io.Serializable;
 import java.util.*;
 
-public class Clasificacion implements Serializable {
+public class Clasificacion implements Serializable, Comparable<Clasificacion> {
     private final TreeSet<Equipo> clasificacion;
     private String competicion = "ACB";
 
@@ -11,13 +11,18 @@ public class Clasificacion implements Serializable {
         clasificacion = new TreeSet<>();
     }
 
-    public Clasificacion(String competicion) {
+    public Clasificacion(Set<Equipo> equipos, String competicion) {
         this.competicion = competicion;
-        clasificacion = new TreeSet<>();
+        clasificacion = new TreeSet<>(equipos);
     }
 
     public Clasificacion(Set<Equipo> equipos) {
         clasificacion = new TreeSet<>(equipos);
+    }
+
+    public Clasificacion(String competicion) {
+        this.competicion = competicion;
+        clasificacion = new TreeSet<>();
     }
 
     public String getCompeticion() {
@@ -29,7 +34,9 @@ public class Clasificacion implements Serializable {
     }
 
     public boolean addEquipo(Equipo equipo) {
-        return clasificacion.add(equipo);
+        if (!clasificacion.contains(equipo))
+            return clasificacion.add(equipo);
+        return false;
     }
 
     public boolean removeEquipo(Equipo equipo){
@@ -54,9 +61,16 @@ public class Clasificacion implements Serializable {
     }
 
     @Override
+    public int compareTo(Clasificacion o) {
+        return this.competicion.compareToIgnoreCase(o.competicion);
+    }
+
+    @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
-        sb.append("Lista de Equipos:\n");
+        sb.append("*************************\n");
+        sb.append("Clasificación ").append(competicion).append(":\n");
+        sb.append("*************************\n");
         for (Equipo e : clasificacion)
             sb.append("\n\t").append(e.toString());
         return sb.toString();

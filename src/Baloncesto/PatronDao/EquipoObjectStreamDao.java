@@ -48,7 +48,7 @@ public class EquipoObjectStreamDao implements Dao<Equipo, String> {
                 try {
                     Equipo equipo = (Equipo) ois.readObject();
                     set.add(equipo);
-                } catch (EOFException e) {
+                } catch (Exception e) {
                     break; // Rompe el bucle cuando se llega al final del archivo
                 }
             }
@@ -56,8 +56,6 @@ public class EquipoObjectStreamDao implements Dao<Equipo, String> {
             System.err.println("FileNotFoundException in getAll()");
         } catch (IOException e) {
             System.err.println("IOException in getAll()");
-        } catch (ClassNotFoundException e) {
-            System.err.println("ClassNotFoundException in getAll()");
         }
         TreeSet<Equipo> sortedSet = sortSet(set);
         saveAll(sortedSet);
@@ -70,6 +68,9 @@ public class EquipoObjectStreamDao implements Dao<Equipo, String> {
      */
     @Override
     public boolean save(Equipo equipo) {
+        if (getAll().contains(equipo))
+            return false;
+
         boolean append = Files.exists(datos);
         try (FileOutputStream fos = new FileOutputStream(datos.toFile(), append);
              ObjectOutputStream oos = append ? new EquipoOutputStream(fos) : new ObjectOutputStream(fos)) {

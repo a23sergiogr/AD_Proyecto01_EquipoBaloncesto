@@ -22,96 +22,99 @@ public class ClasificacionFileDao implements Dao<Clasificacion, String>{
 
     @Override
     public Clasificacion get(String id) {
-        HashSet<Clasificacion> set = new HashSet<>(getAll());
-        for (Clasificacion c : set)
-            if (c.equals(new Clasificacion(id)))
-                return c;
-        return null;
+        HashSet<Clasificacion> clasificaciones = new HashSet<>(getAll());
+        return clasificaciones.stream()
+                .filter(c -> c.getCompeticion().equalsIgnoreCase(id))
+                .findFirst()
+                .orElse(null);
     }
 
     @Override
     public Set<Clasificacion> getAll() {
-        TreeSet<Clasificacion> set = new TreeSet<>();
-        TreeSet<Equipo> setEquipo = new TreeSet<>();
-        try(var ois = new ObjectInputStream(new FileInputStream(RUTA))){
-            setEquipo.add((Equipo) ois.readObject());
-        } catch (FileNotFoundException e) {
-            System.err.println("FileNotFoundException in getAll()");
-        } catch (IOException e) {
-            System.err.println("IOException in getAll()");
-        } catch (ClassNotFoundException e) {
-            System.err.println("ClassNotFoundException in getAll()");
+        TreeSet<Clasificacion> clasificaciones = new TreeSet<>();
+        if (Files.exists(datos) && Files.isDirectory(datos)) {
+            try {
+                Files.walk(datos)
+                        .filter(Files::isRegularFile)
+                        .filter(path -> path.toString().endsWith(".dat"))
+                        .forEach(path -> {
+                            Clasificacion clasificacion = new Clasificacion(path.getFileName().toString().replace(".dat", ""));
+                            try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(path.toFile()))) {
+                                while (true) {
+                                    try {
+                                        Equipo equipo = (Equipo) ois.readObject();
+                                            clasificacion.addEquipo(equipo);
+                                    } catch (EOFException e) {
+                                        break;
+                                    }
+                                }
+                            } catch (IOException | ClassNotFoundException e) {
+                                System.err.println("Error al leer los equipos del archivo: " + path + " - " + e.getMessage());
+                            }
+                            clasificaciones.add(clasificacion);
+                        });
+            } catch (IOException e) {
+                System.err.println("Error al leer archivos de clasificaciones: " + e.getMessage());
+            }
         }
-        set.add(new Clasificacion(setEquipo));
-        saveAll(set);
-        return set;
+
+        return clasificaciones;
     }
 
     @Override
     public boolean save(Clasificacion clasificacion) {
+        String archivoClasificacion = RUTA + clasificacion.getCompeticion() + ".dat";
         EquipoDaoFactory equipoDAOFactory = EquipoDaoFactory.getInstance();
-        Dao<Equipo, String> equipoDao = equipoDAOFactory.getEquipoDAO("OS", RUTA);
-        //clasificacion.getEquipos().forEach(equipoDao::save);
-        TreeSet<Equipo> set = clasificacion.getEquipos();
-        boolean equipo = false;
-        for (Equipo e : set)
-            equipo = equipoDao.save(e);
-        return equipo;
+        Dao<Equipo, String> equipoDao = equipoDAOFactory.getEquipoDAO("OS", archivoClasificacion);
+        clasificacion.getEquipos().forEach(equipoDao::save);
+        return true;
     }
 
     @Override
     public boolean delete(Clasificacion clasificacion) {
-        TreeSet<Clasificacion> set = new TreeSet<>(getAll());
-        boolean removed = set.removeIf(c -> c.equals(clasificacion));
-        if (removed)
-            saveAll(set);
-        return removed;
+        try {
+            return Files.deleteIfExists(Paths.get(RUTA + clasificacion.getCompeticion() + ".dat"));
+        } catch (IOException e) {
+            return false;
+        }
     }
 
     @Override
     public boolean deleteById(String id) {
-        TreeSet<Clasificacion> set = new TreeSet<>(getAll());
-        boolean removed = set.removeIf(c -> c.getCompeticion().equals(id));
-        if (removed)
-            saveAll(set);
-
-        return removed;
+        try {
+            return Files.deleteIfExists(Paths.get(RUTA + id + ".dat"));
+        } catch (IOException e) {
+            return false;
+        }
     }
 
     @Override
     public boolean deleteAll() {
-        try {
-            Files.deleteIfExists(datos);
-            if (Files.exists(datos))
-                return false;
-            Files.createFile(datos);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
+        Path path1 = Paths.get(RUTA);
+        System.out.println(RUTA);
+        if (Files.exists(path1) && Files.isDirectory(path1)) {
+            try {
+                // Obtener todos los archivos en la ruta que terminen en ".dat"
+                Files.walk(path1)
+                        .filter(Files::isRegularFile)
+                        .filter(path -> path.toString().endsWith(".dat"))
+                        .forEach(path -> {
+                            try {
+                                Files.delete(path);
+                            } catch (IOException e) {
+                                System.err.println("Error al borrar el fichero");
+                            }
+                        });
+            } catch (IOException e) {
+                System.err.println("Error al leer archivos de clasificaciones: " + e.getMessage());
+            }
         }
         return true;
     }
 
     @Override
     public void update(Clasificacion clasificacion) {
-        TreeSet<Clasificacion> set = new TreeSet<>(getAll());
-        set.removeIf(c -> c.equals(clasificacion));
-        set.add(clasificacion);
-        saveAll(set);
-    }
-
-    private boolean saveAll(TreeSet<Clasificacion> set) {
-        try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(RUTA))) {
-            set.forEach(c -> {
-                try {
-                    oos.writeObject(c);
-                } catch (IOException ex) {
-                    System.err.println("IOException in Stream()");
-                }
-            });
-
-        } catch (IOException e) {
-            System.err.println("IOException in saveAll()");
-        }
-        return true;
+        delete(clasificacion);
+        save(clasificacion);
     }
 }
